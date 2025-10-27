@@ -1,0 +1,59 @@
+﻿@page "/orders"
+@using LogisticApp.BusinessLogic.Services
+@using LogisticApp.Models
+@inject IOrderService OrderService
+@inject IDriverService DriverService
+
+<h3>Order Assignment Simulation</h3>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+<button class="btn btn-primary " onclick="window.print()">
+    <i class="bi bi-printer"></i> Print Orders
+</button>
+</div>
+
+@if (assignments is null)
+{
+    <p>Loading...</p>
+}
+else if (!assignments.Any())
+{
+    <p>No assignments found.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var result in assignments)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Order: @result.Order?.Id</h5>
+                        <p class="card-text"><strong>Customer:</strong> @result.Order?.CustomerName</p>
+                        <p class="card-text"><strong>Destination:</strong> @result.Order?.DestinationCity</p>
+                        <p class="card-text"><strong>Weight:</strong> @result.Order?.Weight</p>
+                        <p class="card-text">
+                            @(result.IsAssigned? result.Driver?.Name : "No driver assigned")
+                        </p>
+                        @if (!string.IsNullOrEmpty(result.Notes))
+                        {
+                            <p class="text-muted">@result.Notes</p>
+                        }
+                       
+                    </div>
+                </div>
+            </div>
+        }
+      
+    </div>
+}
+
+@code {
+    private List<Order>? orders;
+    private List<DriverDto>? drivers;
+    private List<AssignmentResult>? assignments;
+    protected override async Task OnInitializedAsync()
+    {
+        await OrderService.ClearAssignmentsAsync();
+        assignments = await OrderService.AssignDrivers();
+    }
+}

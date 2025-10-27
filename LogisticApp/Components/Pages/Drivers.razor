@@ -1,0 +1,185 @@
+﻿@page "/drivers"
+@using LogisticApp.BusinessLogic.Services
+@using LogisticApp.Models
+@inject IDriverService DriverService
+@inject IOrderService OrderService
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<h3>Drivers</h3>
+
+@if (drivers == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Max Deliveries</th>
+                <th>Orders</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in drivers)
+            {
+                <tr>
+                    <td>
+                        @if (editId == d.Id)
+                        {
+                            <input class="form-control" @bind="d.Name" />
+                        }
+                        else
+                        {
+                            @d.Name
+                        }
+                    </td>
+                    <td>
+                        @if (editId == d.Id)
+                        {
+                            <input class="form-control" type="number" @bind="d.MaxDeliveriesPerDay" @oninput="() => CheckDriver(d)" />
+                        }
+                        else
+                        {
+                            @d.MaxDeliveriesPerDay
+
+                        }
+                     
+                    </td>
+                    <td>@d.OrdersCount</td>
+                    <td>
+                        @if (editId == d.Id)
+                        {
+                            <button class="btn btn-sm btn-success" @onclick="() => Save(d)">Save</button>
+                            <button class="btn btn-sm btn-secondary ms-2" @onclick="CancelEdit">Cancel</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-primary" @onclick="() => Edit(d)">Edit</button>
+                            <button class="btn btn-sm btn-danger ms-2" @onclick="() => Delete(d.Id)">Delete</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+    <h4>Add New Driver</h4>
+    <h5>Name</h5>
+    <div class="mb-3">
+        <input class="form-control" placeholder="Insert Name" @bind="newDriver.Name" />
+    </div>
+    <h5>Max Deliveries Per Day</h5>
+    <div class="mb-3">
+        <input class="form-control" placeholder="Max Deliveries Per Day" type="number" @bind="newDriver.MaxDeliveriesPerDay" />
+    </div>
+    <button class="btn btn-success" @onclick="AddDriver">Add</button>
+    <button class="btn btn-primary" @onclick="RefreshAssignments">
+        <i class="bi bi-arrow-clockwise"></i> Refresh Assignments
+    </button>
+}
+
+@code {
+    private List<DriverDto>? drivers;
+    private int? editId = null;
+    private DriverDto newDriver = new();
+    private string modalDriverName = "";
+    private int modalAssignedOrders = 0;
+    private bool showModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDrivers();
+    }
+
+    private async Task LoadDrivers()
+    {
+        drivers = await DriverService.GetAllDriversAsync();
+    }
+
+    private void Edit(DriverDto driver)
+    {
+        editId = driver.Id;
+    }
+
+    private async Task CancelEdit()
+    {
+        editId = null;
+        await LoadDrivers(); // reload to discard changes
+    }
+
+    private async Task Save(DriverDto driver)
+    {
+        try
+        {
+            await DriverService.UpdateDriverAsync(driver);
+            editId = null;
+            await LoadDrivers();
+            showModal = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error updating driver: " + ex.Message);       
+        }
+    }
+
+    private async Task Delete(int id)
+    {
+        try
+        {
+            await DriverService.DeleteDriverAsync(id);
+            await LoadDrivers();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error deleting driver: " + ex.Message);
+        }
+    }
+
+    private async Task AddDriver()
+    {
+        try
+        {
+            await DriverService.AddDriverAsync(newDriver);
+            newDriver = new();
+            await LoadDrivers();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error adding driver: " + ex.Message);
+        }
+    }
+    private async Task RefreshAssignments()
+    {
+        await OrderService.ClearAssignmentsAsync();
+        await OrderService.AssignDrivers();
+        await LoadDrivers();
+    }
+    private async Task CheckDriver(DriverDto driver)
+    {
+
+        if (driver.MaxDeliveriesPerDay < driver.OrdersCount)
+        {
+           
+            await JS.InvokeVoidAsync("Swal.fire", new
+            {
+                icon = "warning",
+                title = "Warning",
+                html = $"Driver <b>{driver.Name}</b> has {driver.OrdersCount} assigned orders.<br>" +
+                       "Max deliveries are lower than assigned orders!<br>" +
+                       "Please increase Max Deliveries or add another driver.",
+                timer = 5000,
+                timerProgressBar = true,
+                showConfirmButton = true
+            });
+
+        }
+    }
+  
+}
