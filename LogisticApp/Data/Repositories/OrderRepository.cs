@@ -1,4 +1,5 @@
-﻿using LogisticApp.Data;
+﻿using LogisticApp.Components.Pages;
+using LogisticApp.Data;
 using LogisticApp.Data.Repositories;
 using LogisticApp.Models;
 using Microsoft.EntityFrameworkCore;
@@ -40,22 +41,16 @@ public class OrderRepository : IOrderRepository
         }
     }
 
-    public async Task<List<AssignmentResult>> AssignDriversAndSaveAsync()
+    public async Task<List<OrderDto>> AssignDriversAndSaveAsync()
     {
-     
         var orders = await _context.Orders.ToListAsync();
         var drivers = await _context.Drivers.ToListAsync();
-    
-        var results = new List<AssignmentResult>();
 
+        var results = new List<OrderDto>();
         var driverLoad = drivers.ToDictionary(d => d.Id, d => 0);
- 
+
         foreach (var order in orders)
         {
-            // Skip if already assigned
-            if (await _context.AssignmentResults.AnyAsync(ar => ar.OrderId == order.Id))
-                continue;
-
             var availableDriver = drivers
                 .FirstOrDefault(d => driverLoad[d.Id] < d.MaxDeliveriesPerDay);
 
@@ -63,47 +58,63 @@ public class OrderRepository : IOrderRepository
             {
                 driverLoad[availableDriver.Id]++;
                 order.DriverId = availableDriver.Id;
-                var assignment = new AssignmentResult
+
+                var dto = new OrderDto
                 {
-                    OrderId = order.Id,
+                    Id = order.Id,
+                    CustomerName = order.CustomerName,
+                    DestinationCity = order.DestinationCity,
+                    Weight = order.Weight,
                     DriverId = availableDriver.Id,
-                    IsAssigned = true,
+                    DriverName = availableDriver.Name,
+                    MaxDeliveriesPerDay = availableDriver.MaxDeliveriesPerDay,
                     Notes = $"Assigned to driver {availableDriver.Name}"
                 };
 
-                results.Add(assignment);
-                _context.Add(assignment);
+                results.Add(dto);
             }
             else
             {
-                var assignment = new AssignmentResult
+                var dto = new OrderDto
                 {
-                    OrderId = order.Id,
+                    Id = order.Id,
+                    CustomerName = order.CustomerName,
+                    DestinationCity = order.DestinationCity,
+                    Weight = order.Weight,
                     DriverId = null,
-                    IsAssigned = false,
+                    DriverName = "Unassigned",
                     Notes = "No available driver (capacity full)"
                 };
 
-                results.Add(assignment);
-                _context.AssignmentResults.Add(assignment);
+                results.Add(dto);
+             
             }
+            _context.Orders.Update(order);
         }
-
+   
         await _context.SaveChangesAsync();
         return results;
     }
 
-    public async Task ClearAssignmentsAsync()
-    {
-       
-        var allAssignments = await _context.AssignmentResults.ToListAsync();
 
-        if (allAssignments.Any())
+
+public async Task ClearAssignmentsAsync()
+{
+    // Get all orders that have a driver assigned
+    var assignedOrders = await _context.Orders
+        .Where(o => o.DriverId != null)
+        .ToListAsync();
+
+    if (assignedOrders.Any())
+    {
+        foreach (var order in assignedOrders)
         {
-            _context.AssignmentResults.RemoveRange(allAssignments);
-            await _context.SaveChangesAsync();
+            order.DriverId = null;  // Unassign driver
         }
+
+        await _context.SaveChangesAsync();
     }
+}
 
 }
 

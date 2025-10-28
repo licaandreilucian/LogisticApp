@@ -10,7 +10,6 @@ namespace LogisticApp.Data
 
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<Driver> Drivers => Set<Driver>();
-        public DbSet<AssignmentResult> AssignmentResults => Set<AssignmentResult>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,39 +56,6 @@ namespace LogisticApp.Data
 
                 builder.Property(o => o.Weight)
                     .IsRequired();
-            });
-
-            modelBuilder.Entity<AssignmentResult>(entity =>
-            {
-                entity.ToTable("AssignmentResults");
-
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.Id)
-                      .ValueGeneratedOnAdd();
-
-                entity.Property(e => e.IsAssigned)
-                      .IsRequired();
-
-                entity.Property(e => e.Notes)
-                      .HasMaxLength(500);
-
-                entity.Property(e => e.AssignedAt)
-                      .HasDefaultValueSql("GETUTCDATE()");
-
-                // === Relationships ===
-                // One AssignmentResult has one main Order
-                entity.HasOne(e => e.Order)
-                      .WithOne(o => o.AssignmentResult)
-                      .HasForeignKey<AssignmentResult>(e => e.OrderId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
-                // Optional Driver (may be unassigned)
-                entity.HasOne<DriverDto>(e => e.Driver)
-                      .WithMany()
-                      .HasForeignKey(e => e.DriverId)
-                      .OnDelete(DeleteBehavior.SetNull);
-
             });
 
             base.OnModelCreating(modelBuilder);

@@ -9,7 +9,7 @@ namespace LogisticApp.BusinessLogic.Services
         Task AddOrderAsync(Order order);
         Task UpdateOrderAsync(Order order);
         Task DeleteOrderAsync(int id);
-        Task<List<AssignmentResult>> AssignDrivers();
+        Task<List<OrderDto>> AssignDrivers();
         Task ClearAssignmentsAsync();
     }
 }

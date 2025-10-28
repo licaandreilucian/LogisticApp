@@ -4,9 +4,8 @@
 @inject IDriverService DriverService
 @inject IOrderService OrderService
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
-@inject IJSRuntime JS
 @rendermode InteractiveServer
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 <h3>Drivers</h3>
 
@@ -42,7 +41,7 @@ else
                     <td>
                         @if (editId == d.Id)
                         {
-                            <input class="form-control" type="number" @bind="d.MaxDeliveriesPerDay" @oninput="() => CheckDriver(d)" />
+                            <input class="form-control" type="number" @bind="d.MaxDeliveriesPerDay" />
                         }
                         else
                         {
@@ -89,9 +88,7 @@ else
     private List<DriverDto>? drivers;
     private int? editId = null;
     private DriverDto newDriver = new();
-    private string modalDriverName = "";
-    private int modalAssignedOrders = 0;
-    private bool showModal = false;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -121,7 +118,6 @@ else
             await DriverService.UpdateDriverAsync(driver);
             editId = null;
             await LoadDrivers();
-            showModal = false;
         }
         catch (Exception ex)
         {
@@ -160,26 +156,6 @@ else
         await OrderService.ClearAssignmentsAsync();
         await OrderService.AssignDrivers();
         await LoadDrivers();
-    }
-    private async Task CheckDriver(DriverDto driver)
-    {
-
-        if (driver.MaxDeliveriesPerDay < driver.OrdersCount)
-        {
-           
-            await JS.InvokeVoidAsync("Swal.fire", new
-            {
-                icon = "warning",
-                title = "Warning",
-                html = $"Driver <b>{driver.Name}</b> has {driver.OrdersCount} assigned orders.<br>" +
-                       "Max deliveries are lower than assigned orders!<br>" +
-                       "Please increase Max Deliveries or add another driver.",
-                timer = 5000,
-                timerProgressBar = true,
-                showConfirmButton = true
-            });
-
-        }
     }
   
 }

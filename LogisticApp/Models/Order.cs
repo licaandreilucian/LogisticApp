@@ -10,6 +10,6 @@
         // Foreign key
         public int? DriverId { get; set; }
         public Driver? Driver { get; set; }
-        public AssignmentResult? AssignmentResult { get; set; }
+     
     }
 }

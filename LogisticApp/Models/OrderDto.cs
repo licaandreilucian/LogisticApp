@@ -9,5 +9,10 @@
 
         public int? DriverId { get; set; }
         public string? DriverName { get; set; }
+        public int? MaxDeliveriesPerDay { get; set; }
+
+        public bool IsAssigned => DriverId != null;
+        public string Notes { get; set; } = string.Empty;
     }
+
 }

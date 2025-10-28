@@ -11,49 +11,46 @@
 </button>
 </div>
 
-@if (assignments is null)
+@if (orders == null)
 {
-    <p>Loading...</p>
-}
-else if (!assignments.Any())
-{
-    <p>No assignments found.</p>
+    <p><em>Loading...</em></p>
 }
 else
 {
-    <div class="row">
-        @foreach (var result in assignments)
-        {
-            <div class="col-md-4 mb-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Order: @result.Order?.Id</h5>
-                        <p class="card-text"><strong>Customer:</strong> @result.Order?.CustomerName</p>
-                        <p class="card-text"><strong>Destination:</strong> @result.Order?.DestinationCity</p>
-                        <p class="card-text"><strong>Weight:</strong> @result.Order?.Weight</p>
-                        <p class="card-text">
-                            @(result.IsAssigned? result.Driver?.Name : "No driver assigned")
-                        </p>
-                        @if (!string.IsNullOrEmpty(result.Notes))
-                        {
-                            <p class="text-muted">@result.Notes</p>
-                        }
-                       
-                    </div>
-                </div>
-            </div>
-        }
-      
-    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Destination</th>
+                <th>Weight</th>
+                <th>Driver</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in orders)
+            {
+                <tr>
+                    <td>@o.Id</td>
+                    <td>@o.CustomerName</td>
+                    <td>@o.DestinationCity</td>
+                    <td>@o.Weight</td>
+                    <td>@o.DriverName</td>
+                    <td>@o.Notes</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
 
 @code {
-    private List<Order>? orders;
-    private List<DriverDto>? drivers;
-    private List<AssignmentResult>? assignments;
+    private List<OrderDto>? orders;
+
     protected override async Task OnInitializedAsync()
     {
-        await OrderService.ClearAssignmentsAsync();
-        assignments = await OrderService.AssignDrivers();
+
+        orders = await OrderService.AssignDrivers();
+
     }
 }

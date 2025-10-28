@@ -9,7 +9,7 @@ namespace LogisticApp.Data.Repositories
         Task AddAsync(Order order);
         Task UpdateAsync(Order order);
         Task DeleteAsync(int id);
-        Task<List<AssignmentResult>> AssignDriversAndSaveAsync();
+        Task<List<OrderDto>> AssignDriversAndSaveAsync();
         Task ClearAssignmentsAsync();
     }
 }

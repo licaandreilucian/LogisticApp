@@ -18,7 +18,7 @@ public class OrderService : IOrderService
     public Task AddOrderAsync(Order order) => _repo.AddAsync(order);
     public Task UpdateOrderAsync(Order order) => _repo.UpdateAsync(order);
     public Task DeleteOrderAsync(int id) => _repo.DeleteAsync(id);
-    public Task<List<AssignmentResult>> AssignDrivers() => _repo.AssignDriversAndSaveAsync();
+    public Task<List<OrderDto>> AssignDrivers() => _repo.AssignDriversAndSaveAsync();
     public Task ClearAssignmentsAsync() => _repo.ClearAssignmentsAsync();
 
 }
