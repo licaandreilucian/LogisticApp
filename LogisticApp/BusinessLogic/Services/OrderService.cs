@@ -26,10 +26,27 @@ public class OrderService : IOrderService
         var drivers =  await _context.Drivers.ToListAsync();
 
         var results = new List<OrderDto>();
-        var driverLoad = drivers.ToDictionary(d => d.Id, d => 0);
+        var driverLoad = drivers.ToDictionary(d => d.Id, d => d.Orders?.Count ?? 0);
+
+        foreach (var existingOrder in orders.Where(o => o.DriverId != null))
+        {
+            results.Add(new OrderDto
+            {
+                Id = existingOrder.Id,
+                CustomerName = existingOrder.CustomerName,
+                DestinationCity = existingOrder.DestinationCity,
+                Weight = existingOrder.Weight,
+                DriverId = existingOrder.DriverId,
+                DriverName = existingOrder.Driver?.Name ?? "Unknown",
+                MaxDeliveriesPerDay = existingOrder.Driver?.MaxDeliveriesPerDay ?? 0,
+                Notes = $"Already assigned to driver {existingOrder.Driver?.Name}"
+            });
+        }
 
         foreach (var order in orders)
         {
+
+         if (order.DriverId != null) continue ; 
             var availableDriver = drivers
                 .FirstOrDefault(d => driverLoad[d.Id] < d.MaxDeliveriesPerDay);
 
